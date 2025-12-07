@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 87, 71, 3),
+        backgroundColor: const Color.fromARGB(255, 218, 181, 17),
         appBar: AppBar(
           title: Text(
             "FlexiSpace",
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
         body: Center(
           child: Container(
             height: 300,
-            width: 300,
+            width: 600,
 
             padding: EdgeInsets.all(25),
             decoration: BoxDecoration(
