@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MaterialApp(home: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -9,37 +9,118 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 218, 181, 17),
-        appBar: AppBar(
-          title: Text(
-            "FlexiSpace",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.yellow,
-          elevation: 0,
-          leading: Icon(Icons.menu),
-          actions: [IconButton(onPressed: () {}, icon: Icon(Icons.logout))],
-        ),
-        body: Center(
-          child: Container(
-            height: 780,
-            width: 360,
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
 
-            padding: EdgeInsets.all(25),
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 218, 199, 93),
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: Text(
-              "FlexiSpace",
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFE4C26F), // svijetlo-zlatna
+              Color(0xFFB49139), // tamnija zlatna
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "FlexiSpace",
+                  textDirection: TextDirection.ltr,
+                  style: TextStyle(
+                    fontSize: 42,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: "Arial",
+                  ),
+                ),
+                const SizedBox(height: 40),
+
+                const Text(
+                  "Create an account",
+                  textDirection: TextDirection.ltr,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+
+                const Text(
+                  "Enter your email to sign up for this app",
+                  textDirection: TextDirection.ltr,
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+
+                // EMAIL FIELD
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: "email@domain.com",
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 16,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // CONTINUE BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {},
+                    child: const Text(
+                      "Continue",
+                      textDirection: TextDirection.ltr,
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // OR DIVIDER
+                Row(
+                  children: const [
+                    Expanded(
+                      child: Divider(color: Colors.white70, thickness: 1),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text("or", textDirection: TextDirection.ltr),
+                    ),
+                    Expanded(
+                      child: Divider(color: Colors.white70, thickness: 1),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  "By clicking continue, you agree to our Terms of Service\nand Privacy Policy",
+                  textDirection: TextDirection.ltr,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
             ),
           ),
         ),
