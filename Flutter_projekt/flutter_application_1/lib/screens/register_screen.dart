@@ -36,7 +36,7 @@ class RegisterScreen extends StatelessWidget {
                 const SizedBox(height: 40),
 
                 const Text(
-                  "Create an account",
+                  "Create an account?",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
