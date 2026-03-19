@@ -1,0 +1,55 @@
+import '../models/room.dart';
+
+/// Demo podaci za prostorije
+List<Room> get roomsData => [
+      Room(
+        id: '1',
+        name: 'Orlando sala',
+        imagePath: '',
+        address: 'Ul. od Puča 12',
+        pricePerMinute: 0.08,
+        capacity: 30,
+        hasWifi: true,
+        hasWater: true,
+      ),
+      Room(
+        id: '2',
+        name: 'Učionica 3C',
+        imagePath: '',
+        address: 'Ul. Studentska 5',
+        pricePerMinute: 0.05,
+        capacity: 24,
+        hasWifi: false,
+        hasWater: true,
+      ),
+      Room(
+        id: '3',
+        name: 'Study corner',
+        imagePath: '',
+        address: 'Ul. Knjižnična 3',
+        pricePerMinute: 0.04,
+        capacity: 16,
+        hasWifi: true,
+        hasWater: false,
+      ),
+      Room(
+        id: '4',
+        name: 'Library room',
+        imagePath: '',
+        address: 'Ul. Knjižnična 1',
+        pricePerMinute: 0.03,
+        capacity: 4,
+        hasWifi: false,
+        hasWater: false,
+      ),
+      Room(
+        id: '5',
+        name: 'Collab zone',
+        imagePath: '',
+        address: 'Ul. Suradnička 8',
+        pricePerMinute: 0.06,
+        capacity: 10,
+        hasWifi: true,
+        hasWater: true,
+      ),
+    ];

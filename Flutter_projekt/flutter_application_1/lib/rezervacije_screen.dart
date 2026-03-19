@@ -1,127 +1,168 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class Room {
-  final String name;
-  final String imagePath;
-  final int capacity;
-  final bool hasWifi;
-  final bool hasProjector;
+import 'core/models/room.dart';
+import 'core/theme/app_theme.dart';
+import 'features/spaces/application/spaces_providers.dart';
 
-  Room({
-    required this.name,
-    required this.imagePath,
-    required this.capacity,
-    required this.hasWifi,
-    required this.hasProjector,
-  });
-}
-
-class RoomsPage extends StatelessWidget {
-  RoomsPage({super.key});
-
-  final List<Room> rooms = [
-    Room(
-      name: 'Orlando sala',
-      imagePath: '../assets/orlando.jpg',
-      capacity: 30,
-      hasWifi: true,
-      hasProjector: true,
-    ),
-    Room(
-      name: 'Učionica 3C',
-      imagePath: 'assets/3c.jpg',
-      capacity: 24,
-      hasWifi: false,
-      hasProjector: false,
-    ),
-    Room(
-      name: 'Study corner',
-      imagePath: 'assets/study.jpg',
-      capacity: 16,
-      hasWifi: true,
-      hasProjector: false,
-    ),
-    Room(
-      name: 'Library room',
-      imagePath: 'assets/library.jpg',
-      capacity: 4,
-      hasWifi: false,
-      hasProjector: false,
-    ),
-    Room(
-      name: 'Collab zone',
-      imagePath: 'assets/collab.jpg',
-      capacity: 10,
-      hasWifi: true,
-      hasProjector: true,
-    ),
-  ];
+class RoomsPage extends ConsumerWidget {
+  const RoomsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF9C8C44),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFE6D36F),
-        elevation: 2,
-        title: const Text('Rezerviraj', style: TextStyle(color: Colors.black)),
-        leading: const Icon(Icons.menu, color: Colors.black),
-        actions: const [
-          Icon(Icons.search, color: Colors.black),
-          SizedBox(width: 12),
-          Icon(Icons.location_on, color: Colors.black),
-          SizedBox(width: 12),
-        ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final roomsAsync = ref.watch(roomsProvider);
+
+    return roomsAsync.when(
+      data: (rooms) => _RoomsContent(rooms: rooms),
+      loading: () => Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: AppTheme.gradientBackground,
+        child: const Center(child: CircularProgressIndicator()),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: rooms.length,
-        itemBuilder: (context, index) {
-          return RoomCard(
-            room: rooms[index],
-            onTap: () {
-              // 👉 OVDJE KASNIJE IDE NAVIGACIJA
-              // Navigator.push(...)
-            },
-          );
-        },
+      error: (e, _) => Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: AppTheme.gradientBackground,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.black54),
+              const SizedBox(height: 16),
+              Text(
+                'Greška u učitavanju prostorija',
+                style: TextStyle(color: Colors.black87, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                e.toString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class RoomCard extends StatelessWidget {
+class _RoomsContent extends ConsumerWidget {
+  final List<Room> rooms;
+
+  const _RoomsContent({required this.rooms});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // App bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                      icon: const Icon(Icons.menu, color: Colors.black),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Rezerviraj',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.search, color: Colors.black),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.location_on, color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+              // Lista prostorija
+              Expanded(
+                child: rooms.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.meeting_room_outlined, size: 64, color: Colors.grey.shade400),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Nema dostupnih prostorija',
+                              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        itemCount: rooms.length,
+                        itemBuilder: (context, index) {
+                          return _RoomCard(
+                            room: rooms[index],
+                            onTap: () {
+                              context.push('/rooms/${rooms[index].id}', extra: rooms[index]);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+    );
+  }
+}
+
+class _RoomCard extends StatelessWidget {
   final Room room;
   final VoidCallback onTap;
 
-  const RoomCard({super.key, required this.room, required this.onTap});
+  const _RoomCard({required this.room, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F0D8),
-          borderRadius: BorderRadius.circular(20),
+          color: AppTheme.cardWhite,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            /// IMAGE
+            // Thumbnail
             ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.asset(
-                room.imagePath,
-                width: 90,
-                height: 70,
-                fit: BoxFit.cover,
-              ),
+              borderRadius: BorderRadius.circular(10),
+              child: _RoomThumbnail(imagePath: room.imagePath),
             ),
             const SizedBox(width: 16),
-
-            /// INFO
+            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,21 +172,26 @@ class RoomCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      if (room.hasWifi) const Icon(Icons.wifi, size: 18),
-                      if (room.hasProjector)
+                      if (room.hasWifi)
                         const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 6),
-                          child: Icon(Icons.tv, size: 18),
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.wifi, size: 18, color: Colors.black54),
                         ),
+                      if (room.hasWater)
+                        const Icon(Icons.videocam, size: 18, color: Colors.black54),
                       const Spacer(),
-                      const Icon(Icons.people, size: 18),
+                      const Icon(Icons.groups, size: 18, color: Colors.black54),
                       const SizedBox(width: 4),
-                      Text('${room.capacity}'),
+                      Text(
+                        '${room.capacity}',
+                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                      ),
                     ],
                   ),
                 ],
@@ -154,6 +200,29 @@ class RoomCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RoomThumbnail extends StatelessWidget {
+  final String imagePath;
+
+  const _RoomThumbnail({required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 80,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: imagePath.isEmpty
+          ? Icon(Icons.meeting_room, color: Colors.grey.shade600, size: 32)
+          : imagePath.startsWith('http')
+              ? Image.network(imagePath, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.meeting_room, color: Colors.grey.shade600, size: 32))
+              : Image.asset(imagePath, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.meeting_room, color: Colors.grey.shade600, size: 32)),
     );
   }
 }
