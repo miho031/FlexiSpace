@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/profile.dart';
+import '../../../core/supabase/supabase_client.dart';
 import '../../../core/theme/app_theme.dart';
 import '../application/admin_providers.dart';
 import '../../profile/application/profile_providers.dart';
@@ -30,11 +31,13 @@ class AdminUsersScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             itemCount: profiles.length,
             itemBuilder: (context, index) {
+              final profile = profiles[index];
               return _UserCard(
-                profile: profiles[index],
-                onRoleChanged: (role) => _updateRole(ref, context, profiles[index].id, role),
+                profile: profile,
+                onRoleChanged: (role) =>
+                    _updateRole(ref, context, profile, role),
                 onMembershipToggled: () =>
-                    _toggleMembership(ref, context, profiles[index]),
+                    _toggleMembership(ref, context, profile),
               );
             },
           ),
@@ -57,9 +60,27 @@ class AdminUsersScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _updateRole(WidgetRef ref, BuildContext context, String userId, String role) async {
+  Future<void> _updateRole(
+    WidgetRef ref,
+    BuildContext context,
+    Profile profile,
+    String role,
+  ) async {
+    final currentUserId = ref.read(supabaseClientProvider).auth.currentUser?.id;
+    final isRemovingOwnAdmin = currentUserId == profile.id &&
+        profile.role == 'admin' &&
+        role != 'admin';
+
+    if (isRemovingOwnAdmin) {
+      final confirmed = await _confirmOwnAdminRemoval(context);
+      if (!confirmed) return;
+      if (!context.mounted) return;
+    }
+
     try {
-      await ref.read(profileRepositoryProvider).updateProfile(userId, role: role);
+      await ref
+          .read(profileRepositoryProvider)
+          .updateProfile(profile.id, role: role);
       ref.invalidate(adminProfilesProvider);
       ref.invalidate(currentProfileProvider);
       if (context.mounted) {
@@ -74,6 +95,30 @@ class AdminUsersScreen extends ConsumerWidget {
         );
       }
     }
+  }
+
+  Future<bool> _confirmOwnAdminRemoval(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Skinuti sebi admin prava?'),
+        content: const Text(
+          'Ako nastaviš, možeš izgubiti pristup admin panelu dok te drugi admin ponovno ne postavi.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Odustani'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Potvrdi'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
   }
 
   Future<void> _toggleMembership(WidgetRef ref, BuildContext context, Profile profile) async {

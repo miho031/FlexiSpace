@@ -15,6 +15,21 @@ class SupabaseReservationRepository implements ReservationRepository {
     BookingData bookingData,
     String userId,
   ) async {
+    final profile = await _supabase
+        .from('profiles')
+        .select('membership_active')
+        .eq('id', userId)
+        .maybeSingle();
+    final profileMap = profile == null
+        ? null
+        : Map<String, dynamic>.from(profile as Map);
+    final membershipActive = profileMap?['membership_active'] as bool?;
+    if (membershipActive != true) {
+      throw Exception(
+        'Vas profil je deaktiviran. Ne mozete kreirati rezervacije.',
+      );
+    }
+
     final intervals = await getReservedIntervals(
       spaceId: bookingData.room.id,
       date: bookingData.date,

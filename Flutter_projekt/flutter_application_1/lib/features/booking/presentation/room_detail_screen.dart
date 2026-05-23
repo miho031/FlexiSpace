@@ -29,9 +29,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: AppTheme.primaryYellow,
-                  onPrimary: Colors.black,
-                ),
+              primary: AppTheme.primaryYellow,
+              onPrimary: Colors.white,
+            ),
           ),
           child: MediaQuery(
             data: MediaQuery.of(context).copyWith(
@@ -78,7 +78,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -192,10 +192,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 }
 
 class _RoomHeroImage extends StatelessWidget {
-  const _RoomHeroImage({
-    required this.imagePath,
-    required this.iconSize,
-  });
+  const _RoomHeroImage({required this.imagePath, required this.iconSize});
 
   final String imagePath;
   final double iconSize;
@@ -216,16 +213,16 @@ class _RoomHeroImage extends StatelessWidget {
         child: imagePath.isEmpty
             ? fallback
             : imagePath.startsWith('http')
-                ? Image.network(
-                    imagePath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => fallback,
-                  )
-                : Image.asset(
-                    imagePath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => fallback,
-                  ),
+            ? Image.network(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => fallback,
+              )
+            : Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => fallback,
+              ),
       ),
     );
   }

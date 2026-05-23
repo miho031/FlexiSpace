@@ -35,10 +35,35 @@ class FlexiSpaceApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       title: 'FlexiSpace',
       theme: ThemeData(
-        fontFamily: 'Sans',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppTheme.primaryYellow,
-          brightness: Brightness.light,
+        useMaterial3: true,
+        colorScheme: AppTheme.colorScheme,
+        scaffoldBackgroundColor: AppTheme.gradientEnd,
+        fontFamily: 'Roboto',
+        textTheme: ThemeData.light().textTheme.apply(
+          bodyColor: AppTheme.textPrimary,
+          displayColor: AppTheme.textPrimary,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: AppTheme.yellowButton,
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.primaryYellow,
+            side: const BorderSide(color: AppTheme.primaryYellow),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppTheme.inputFill,
+          hintStyle: const TextStyle(color: AppTheme.textMuted),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppTheme.border),
+          ),
         ),
       ),
       routerConfig: router,

@@ -92,13 +92,11 @@ class _TimeSlotScreenState extends ConsumerState<TimeSlotScreen> {
     final intervalsAsync = userId == null
         ? const AsyncValue<List<ReservedInterval>>.data(<ReservedInterval>[])
         : ref.watch(
-            reservedIntervalsProvider(
-              (
-                spaceId: widget.room.id,
-                date: widget.date,
-                userId: userId,
-              ),
-            ),
+            reservedIntervalsProvider((
+              spaceId: widget.room.id,
+              date: widget.date,
+              userId: userId,
+            )),
           );
 
     return Scaffold(
@@ -121,10 +119,7 @@ class _TimeSlotScreenState extends ConsumerState<TimeSlotScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
                     'Odabrano termina: $selectedCount',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                   ),
                 ),
               const SizedBox(height: 8),
@@ -135,15 +130,16 @@ class _TimeSlotScreenState extends ConsumerState<TimeSlotScreen> {
                     _selectedSlotIndices.removeAll(blockedIndices);
 
                     return Container(
-                      margin:
-                          EdgeInsets.symmetric(horizontal: isNarrow ? 12 : 20),
+                      margin: EdgeInsets.symmetric(
+                        horizontal: isNarrow ? 12 : 20,
+                      ),
                       padding: EdgeInsets.all(isNarrow ? 12 : 20),
                       decoration: BoxDecoration(
                         color: AppTheme.cardWhite,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -155,8 +151,9 @@ class _TimeSlotScreenState extends ConsumerState<TimeSlotScreen> {
                           final slot = _slots[index];
                           final start = slot['start']!;
                           final end = slot['end']!;
-                          final isSelected =
-                              _selectedSlotIndices.contains(index);
+                          final isSelected = _selectedSlotIndices.contains(
+                            index,
+                          );
                           final isBlocked = blockedIndices.contains(index);
 
                           return InkWell(
@@ -176,16 +173,16 @@ class _TimeSlotScreenState extends ConsumerState<TimeSlotScreen> {
                                         color: isBlocked
                                             ? Colors.red.shade700
                                             : isSelected
-                                                ? AppTheme.primaryYellow
-                                                : Colors.grey,
+                                            ? AppTheme.primaryYellow
+                                            : Colors.grey,
                                         width: 2,
                                       ),
                                       borderRadius: BorderRadius.circular(6),
                                       color: isBlocked
                                           ? Colors.red.shade100
                                           : isSelected
-                                              ? AppTheme.primaryYellow
-                                              : Colors.transparent,
+                                          ? AppTheme.primaryYellow
+                                          : Colors.transparent,
                                     ),
                                     child: isBlocked
                                         ? Icon(
@@ -194,12 +191,12 @@ class _TimeSlotScreenState extends ConsumerState<TimeSlotScreen> {
                                             color: Colors.red.shade700,
                                           )
                                         : isSelected
-                                            ? const Icon(
-                                                Icons.check,
-                                                size: 16,
-                                                color: Colors.black,
-                                              )
-                                            : null,
+                                        ? const Icon(
+                                            Icons.check,
+                                            size: 16,
+                                            color: Colors.white,
+                                          )
+                                        : null,
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(

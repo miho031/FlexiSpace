@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/models/room.dart';
 import '../../../core/theme/app_theme.dart';
@@ -16,7 +20,8 @@ class AdminSpaceFormScreen extends ConsumerStatefulWidget {
   bool get isEditing => room != null;
 
   @override
-  ConsumerState<AdminSpaceFormScreen> createState() => _AdminSpaceFormScreenState();
+  ConsumerState<AdminSpaceFormScreen> createState() =>
+      _AdminSpaceFormScreenState();
 }
 
 class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
@@ -26,10 +31,13 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
   late final TextEditingController _priceController;
   late final TextEditingController _capacityController;
   late final TextEditingController _imageUrlController;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageName;
   bool _hasWifi = false;
   bool _hasWater = false;
   String _type = 'meeting_room';
   bool _isLoading = false;
+  bool _isPickingImage = false;
 
   static const List<Map<String, String>> _typeOptions = [
     {'value': 'meeting_room', 'label': 'Sala za sastanke'},
@@ -46,7 +54,9 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
     _priceController = TextEditingController(
       text: r?.pricePerHour.toStringAsFixed(2) ?? '0.00',
     );
-    _capacityController = TextEditingController(text: r?.capacity.toString() ?? '1');
+    _capacityController = TextEditingController(
+      text: r?.capacity.toString() ?? '1',
+    );
     _imageUrlController = TextEditingController(text: r?.imagePath ?? '');
     _hasWifi = r?.hasWifi ?? false;
     _hasWater = r?.hasWater ?? false;
@@ -76,10 +86,7 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
-                  child: Form(
-                    key: _formKey,
-                    child: _buildFormCard(),
-                  ),
+                  child: Form(key: _formKey, child: _buildFormCard()),
                 ),
               ),
             ],
@@ -135,7 +142,8 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
           TextFormField(
             controller: _nameController,
             decoration: AppTheme.inputDecoration('npr. Orlando sala'),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Naziv je obavezan' : null,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Naziv je obavezan' : null,
           ),
           const SizedBox(height: 20),
           _buildLabel('Adresa'),
@@ -158,10 +166,12 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
                 value: _type,
                 isExpanded: true,
                 items: _typeOptions
-                    .map((e) => DropdownMenuItem(
-                          value: e['value'],
-                          child: Text(e['label']!),
-                        ))
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e['value'],
+                        child: Text(e['label']!),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _type = v ?? 'meeting_room'),
               ),
@@ -179,7 +189,9 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _priceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: AppTheme.inputDecoration('4.80'),
                       validator: (v) {
                         if (v == null || v.isEmpty) return null;
@@ -215,12 +227,17 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          _buildLabel('URL slike (opcionalno)'),
+          _buildLabel('Slika prostorije (opcionalno)'),
           const SizedBox(height: 8),
+          _buildImagePicker(),
+          const SizedBox(height: 12),
           TextFormField(
             controller: _imageUrlController,
             keyboardType: TextInputType.url,
-            decoration: AppTheme.inputDecoration('https://...'),
+            decoration: AppTheme.inputDecoration(
+              'URL ili putanja u bucketu spaces',
+            ),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 24),
           _buildLabel('Sadržaji'),
@@ -258,7 +275,9 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
                       height: 24,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(widget.isEditing ? 'Spremi promjene' : 'Dodaj prostoriju'),
+                  : Text(
+                      widget.isEditing ? 'Spremi promjene' : 'Dodaj prostoriju',
+                    ),
             ),
           ),
         ],
@@ -284,7 +303,9 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: value ? AppTheme.primaryYellow.withValues(alpha: 0.3) : Colors.grey.shade200,
+      color: value
+          ? AppTheme.primaryYellow.withValues(alpha: 0.3)
+          : Colors.grey.shade200,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -310,6 +331,120 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
     );
   }
 
+  Widget _buildImagePicker() {
+    final imageValue = _imageUrlController.text.trim();
+    final previewImageUrl = _resolvePreviewImageUrl(imageValue);
+    final hasExistingImage = previewImageUrl.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            height: 180,
+            color: Colors.grey.shade200,
+            child: _selectedImageBytes != null
+                ? Image.memory(_selectedImageBytes!, fit: BoxFit.cover)
+                : hasExistingImage
+                ? Image.network(
+                    previewImageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildImagePlaceholder(),
+                  )
+                : _buildImagePlaceholder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _isLoading || _isPickingImage ? null : _pickImage,
+                icon: _isPickingImage
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.image_outlined),
+                label: Text(
+                  _selectedImageName == null
+                      ? 'Odaberi sliku'
+                      : 'Promijeni sliku',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            if (_selectedImageBytes != null || hasExistingImage) ...[
+              const SizedBox(width: 12),
+              IconButton.filledTonal(
+                tooltip: 'Ukloni sliku',
+                onPressed: _isLoading ? null : _clearImage,
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ],
+        ),
+        if (_selectedImageName != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _selectedImageName!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Center(
+      child: Icon(
+        Icons.meeting_room_outlined,
+        size: 48,
+        color: Colors.grey.shade600,
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    setState(() => _isPickingImage = true);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
+      );
+      final file = result?.files.single;
+      final bytes = file?.bytes;
+      if (file == null || bytes == null) return;
+
+      setState(() {
+        _selectedImageBytes = bytes;
+        _selectedImageName = file.name;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Greška pri odabiru slike: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isPickingImage = false);
+    }
+  }
+
+  void _clearImage() {
+    setState(() {
+      _selectedImageBytes = null;
+      _selectedImageName = null;
+      _imageUrlController.clear();
+    });
+  }
+
   Future<void> _onSave() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -324,6 +459,8 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
     setState(() => _isLoading = true);
     try {
       final repo = ref.read(adminRepositoryProvider);
+      final uploadedImagePath = await _uploadSelectedImage(name);
+      final savedImageUrl = uploadedImagePath ?? imageUrl;
       if (widget.isEditing) {
         await repo.updateSpace(
           widget.room!.id,
@@ -333,7 +470,7 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
           capacity: capacity,
           hasWifi: _hasWifi,
           hasWater: _hasWater,
-          imageUrl: imageUrl.isEmpty ? null : imageUrl,
+          imageUrl: savedImageUrl,
           type: _type,
         );
       } else {
@@ -344,7 +481,7 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
           capacity: capacity,
           hasWifi: _hasWifi,
           hasWater: _hasWater,
-          imageUrl: imageUrl.isEmpty ? null : imageUrl,
+          imageUrl: savedImageUrl.isEmpty ? null : savedImageUrl,
           type: _type,
         );
       }
@@ -353,7 +490,9 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.isEditing ? 'Prostorija ažurirana' : 'Prostorija dodana'),
+            content: Text(
+              widget.isEditing ? 'Prostorija ažurirana' : 'Prostorija dodana',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -361,12 +500,71 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _resolvePreviewImageUrl(String value) {
+    if (value.isEmpty) return '';
+
+    final uri = Uri.tryParse(value);
+    if (uri != null && uri.hasScheme && uri.hasAuthority) {
+      return value;
+    }
+
+    var objectPath = value.replaceAll('\\', '/');
+    while (objectPath.startsWith('/')) {
+      objectPath = objectPath.substring(1);
+    }
+
+    const bucketName = 'spaces';
+    if (objectPath.startsWith('$bucketName/')) {
+      objectPath = objectPath.substring(bucketName.length + 1);
+    }
+
+    if (objectPath.isEmpty) return '';
+    return Supabase.instance.client.storage
+        .from(bucketName)
+        .getPublicUrl(objectPath);
+  }
+
+  Future<String?> _uploadSelectedImage(String roomName) async {
+    final bytes = _selectedImageBytes;
+    final fileName = _selectedImageName;
+    if (bytes == null || fileName == null) return null;
+
+    final extension = fileName.split('.').last.toLowerCase();
+    final safeExtension = extension.isEmpty || extension.length > 5
+        ? 'jpg'
+        : extension;
+    final safeRoomName = roomName
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final objectPath =
+        'admin/${safeRoomName.isEmpty ? 'space' : safeRoomName}-$timestamp.$safeExtension';
+
+    final contentType = switch (safeExtension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'gif' => 'image/gif',
+      _ => 'image/jpeg',
+    };
+
+    await Supabase.instance.client.storage
+        .from('spaces')
+        .uploadBinary(
+          objectPath,
+          bytes,
+          fileOptions: FileOptions(contentType: contentType, upsert: true),
+        );
+
+    return objectPath;
   }
 }

@@ -25,8 +25,17 @@ class AdminRepository {
         .order('start_time', ascending: false);
 
     final list = res as List;
+    final userIds = list
+        .map((e) => (e as Map)['user_id'] as String?)
+        .whereType<String>()
+        .toSet()
+        .toList();
+    final profilesById = await _getProfilesById(userIds);
+
     return list.map((e) {
       final map = Map<String, dynamic>.from(e as Map);
+      final userId = map['user_id'] as String;
+      final profile = profilesById[userId];
       final spacesData = map['spaces'];
       final spaceName = spacesData != null
           ? (spacesData as Map<String, dynamic>)['name'] as String?
@@ -41,7 +50,9 @@ class AdminRepository {
       final durationMin = end.difference(start).inMinutes;
       return AdminReservationView(
         id: map['id'] as String,
-        userId: map['user_id'] as String,
+        userId: userId,
+        userEmail: profile?['email'] as String?,
+        userName: profile?['full_name'] as String?,
         spaceId: map['space_id'] as String,
         spaceName: spaceName ?? 'Nepoznata prostorija',
         startTime: start,
@@ -50,6 +61,31 @@ class AdminRepository {
         totalPrice: pricePerMin * durationMin,
       );
     }).toList();
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _getProfilesById(
+    List<String> userIds,
+  ) async {
+    if (userIds.isEmpty) return {};
+
+    dynamic res;
+    try {
+      res = await _supabase.rpc(
+        'get_admin_reservation_profiles',
+        params: {'user_ids': userIds},
+      );
+    } catch (_) {
+      res = await _supabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .inFilter('id', userIds);
+    }
+
+    final list = res as List;
+    return {
+      for (final item in list)
+        (item as Map)['id'] as String: Map<String, dynamic>.from(item),
+    };
   }
 
   ReservationStatus _parseStatus(String? s) {
@@ -175,6 +211,8 @@ class AdminRepository {
 class AdminReservationView {
   final String id;
   final String userId;
+  final String? userEmail;
+  final String? userName;
   final String spaceId;
   final String spaceName;
   final DateTime startTime;
@@ -185,6 +223,8 @@ class AdminReservationView {
   AdminReservationView({
     required this.id,
     required this.userId,
+    this.userEmail,
+    this.userName,
     required this.spaceId,
     required this.spaceName,
     required this.startTime,

@@ -247,6 +247,19 @@ class _AdminReservationCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
+            reservation.userEmail ?? reservation.userId,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+          ),
+          if (reservation.userName != null &&
+              reservation.userName!.trim().isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              reservation.userName!,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
             '${reservation.formattedDate} • ${reservation.formattedTimeRange}',
             style: const TextStyle(fontSize: 14, color: Colors.black87),
           ),
