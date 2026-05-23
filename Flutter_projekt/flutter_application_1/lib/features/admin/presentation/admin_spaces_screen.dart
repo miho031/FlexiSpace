@@ -156,7 +156,10 @@ class _SpaceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text('Adresa: ${room.address}', style: const TextStyle(fontSize: 14)),
-          Text('Cijena: ${room.pricePerMinute} €/min', style: const TextStyle(fontSize: 14)),
+          Text(
+            'Cijena: ${room.pricePerHour.toStringAsFixed(2).replaceAll('.', ',')} €/h',
+            style: const TextStyle(fontSize: 14),
+          ),
           Text('Kapacitet: ${room.capacity}', style: const TextStyle(fontSize: 14)),
           const SizedBox(height: 8),
           Row(

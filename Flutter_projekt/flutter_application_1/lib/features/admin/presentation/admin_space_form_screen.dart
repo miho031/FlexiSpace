@@ -44,7 +44,7 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
     _nameController = TextEditingController(text: r?.name ?? '');
     _addressController = TextEditingController(text: r?.address ?? '');
     _priceController = TextEditingController(
-      text: r?.pricePerMinute.toStringAsFixed(2) ?? '0.00',
+      text: r?.pricePerHour.toStringAsFixed(2) ?? '0.00',
     );
     _capacityController = TextEditingController(text: r?.capacity.toString() ?? '1');
     _imageUrlController = TextEditingController(text: r?.imagePath ?? '');
@@ -175,12 +175,12 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Cijena (€/min)'),
+                    _buildLabel('Cijena (€/h)'),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _priceController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: AppTheme.inputDecoration('0.08'),
+                      decoration: AppTheme.inputDecoration('4.80'),
                       validator: (v) {
                         if (v == null || v.isEmpty) return null;
                         final n = double.tryParse(v.replaceAll(',', '.'));
@@ -315,7 +315,9 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
 
     final name = _nameController.text.trim();
     final address = _addressController.text.trim();
-    final price = double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0;
+    final hourlyPrice =
+        double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0;
+    final price = hourlyPrice / 60;
     final capacity = int.tryParse(_capacityController.text) ?? 1;
     final imageUrl = _imageUrlController.text.trim();
 

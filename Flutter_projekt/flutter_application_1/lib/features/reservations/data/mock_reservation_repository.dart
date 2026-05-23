@@ -10,29 +10,35 @@ class MockReservationRepository implements ReservationRepository {
   static int _idCounter = 1;
 
   @override
-  Future<Reservation> createReservation(BookingData bookingData, String userId) async {
+  Future<List<Reservation>> createReservations(
+    BookingData bookingData,
+    String userId,
+  ) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
 
-    final startTime = DateTime(
-      bookingData.date.year,
-      bookingData.date.month,
-      bookingData.date.day,
-      bookingData.startHour,
-      bookingData.startMinute,
-    );
-    final endTime = startTime.add(Duration(minutes: bookingData.durationMinutes));
+    final reservations = bookingData.timeRanges.map((range) {
+      final startTime = DateTime(
+        bookingData.date.year,
+        bookingData.date.month,
+        bookingData.date.day,
+        range.startHour,
+        range.startMinute,
+      );
+      final endTime = startTime.add(Duration(minutes: range.durationMinutes));
 
-    final reservation = Reservation(
-      id: 'mock_${_idCounter++}',
-      room: bookingData.room,
-      startTime: startTime,
-      endTime: endTime,
-      status: ReservationStatus.pending,
-      totalPrice: bookingData.totalPrice,
-    );
+      return Reservation(
+        id: 'mock_${_idCounter++}',
+        room: bookingData.room,
+        startTime: startTime,
+        endTime: endTime,
+        status: ReservationStatus.pending,
+        totalPrice: bookingData.room.pricePerMinute *
+            endTime.difference(startTime).inMinutes,
+      );
+    }).toList();
 
-    _mockReservations.add(reservation);
-    return reservation;
+    _mockReservations.addAll(reservations);
+    return reservations;
   }
 
   @override
@@ -43,6 +49,30 @@ class MockReservationRepository implements ReservationRepository {
       return _getDefaultMockReservations();
     }
     return List.from(_mockReservations);
+  }
+
+  @override
+  Future<List<ReservedInterval>> getReservedIntervals({
+    required String spaceId,
+    required DateTime date,
+    required String userId,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    return _mockReservations
+        .where((reservation) =>
+            reservation.room.id == spaceId &&
+            reservation.status != ReservationStatus.rejected &&
+            reservation.startTime.year == date.year &&
+            reservation.startTime.month == date.month &&
+            reservation.startTime.day == date.day)
+        .map(
+          (reservation) => ReservedInterval(
+            startTime: reservation.startTime,
+            endTime: reservation.endTime,
+            blocksBooking: true,
+          ),
+        )
+        .toList();
   }
 
   List<Reservation> _getDefaultMockReservations() {

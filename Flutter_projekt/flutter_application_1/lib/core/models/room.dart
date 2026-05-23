@@ -21,4 +21,6 @@ class Room {
     this.hasWater = false,
     this.isActive = true,
   });
+
+  double get pricePerHour => pricePerMinute * 60;
 }

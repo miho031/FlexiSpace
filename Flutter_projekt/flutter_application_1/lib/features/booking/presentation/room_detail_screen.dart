@@ -98,17 +98,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       const SizedBox(height: 16),
                       AspectRatio(
                         aspectRatio: 16 / 9,
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.meeting_room,
-                            size: isNarrow ? 48 : 64,
-                            color: Colors.grey.shade600,
-                          ),
+                        child: _RoomHeroImage(
+                          imagePath: room.imagePath,
+                          iconSize: isNarrow ? 48 : 64,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -121,7 +113,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Cijena: ${room.pricePerMinute.toStringAsFixed(2)} €/min',
+                        'Cijena: ${room.pricePerHour.toStringAsFixed(2).replaceAll('.', ',')} €/h',
                         style: TextStyle(
                           fontSize: isNarrow ? 13 : 14,
                           color: Colors.black87,
@@ -194,6 +186,46 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RoomHeroImage extends StatelessWidget {
+  const _RoomHeroImage({
+    required this.imagePath,
+    required this.iconSize,
+  });
+
+  final String imagePath;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Icon(
+      Icons.meeting_room,
+      size: iconSize,
+      color: Colors.grey.shade600,
+    );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        color: Colors.grey.shade300,
+        child: imagePath.isEmpty
+            ? fallback
+            : imagePath.startsWith('http')
+                ? Image.network(
+                    imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => fallback,
+                  )
+                : Image.asset(
+                    imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => fallback,
+                  ),
       ),
     );
   }

@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/models/booking_data.dart';
 import '../../../core/models/room.dart';
+import '../../../core/supabase/supabase_client.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../reservations/application/reservation_providers.dart';
+import '../../reservations/domain/reservation_repository.dart';
 
-class TimeSlotScreen extends StatefulWidget {
+class TimeSlotScreen extends ConsumerStatefulWidget {
   final Room room;
   final DateTime date;
 
   const TimeSlotScreen({super.key, required this.room, required this.date});
 
   @override
-  State<TimeSlotScreen> createState() => _TimeSlotScreenState();
+  ConsumerState<TimeSlotScreen> createState() => _TimeSlotScreenState();
 }
 
-class _TimeSlotScreenState extends State<TimeSlotScreen> {
+class _TimeSlotScreenState extends ConsumerState<TimeSlotScreen> {
   final Set<int> _selectedSlotIndices = {};
 
   static const List<Map<String, int>> _slots = [
@@ -34,7 +38,9 @@ class _TimeSlotScreenState extends State<TimeSlotScreen> {
     {'start': 20, 'end': 21},
   ];
 
-  void _toggleSlot(int index) {
+  void _toggleSlot(int index, Set<int> blockedIndices) {
+    if (blockedIndices.contains(index)) return;
+
     setState(() {
       if (_selectedSlotIndices.contains(index)) {
         _selectedSlotIndices.remove(index);
@@ -47,16 +53,34 @@ class _TimeSlotScreenState extends State<TimeSlotScreen> {
   BookingData? _buildBookingData() {
     if (_selectedSlotIndices.isEmpty) return null;
     final sorted = _selectedSlotIndices.toList()..sort();
-    final firstIndex = sorted.first;
-    final lastIndex = sorted.last;
-    final startSlot = _slots[firstIndex];
-    final durationMinutes = (lastIndex - firstIndex + 1) * 60;
+    final ranges = <BookingTimeRange>[];
+    var rangeStartIndex = sorted.first;
+    var previousIndex = sorted.first;
+
+    for (final index in sorted.skip(1)) {
+      if (index == previousIndex + 1) {
+        previousIndex = index;
+        continue;
+      }
+
+      ranges.add(_bookingRangeFromSlotIndexes(rangeStartIndex, previousIndex));
+      rangeStartIndex = index;
+      previousIndex = index;
+    }
+    ranges.add(_bookingRangeFromSlotIndexes(rangeStartIndex, previousIndex));
+
     return BookingData(
       room: widget.room,
       date: widget.date,
+      timeRanges: ranges,
+    );
+  }
+
+  BookingTimeRange _bookingRangeFromSlotIndexes(int firstIndex, int lastIndex) {
+    final startSlot = _slots[firstIndex];
+    return BookingTimeRange(
       startHour: startSlot['start']!,
-      startMinute: 0,
-      durationMinutes: durationMinutes,
+      durationMinutes: (lastIndex - firstIndex + 1) * 60,
     );
   }
 
@@ -64,6 +88,18 @@ class _TimeSlotScreenState extends State<TimeSlotScreen> {
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.of(context).size.width < 400;
     final selectedCount = _selectedSlotIndices.length;
+    final userId = ref.watch(supabaseClientProvider).auth.currentUser?.id;
+    final intervalsAsync = userId == null
+        ? const AsyncValue<List<ReservedInterval>>.data(<ReservedInterval>[])
+        : ref.watch(
+            reservedIntervalsProvider(
+              (
+                spaceId: widget.room.id,
+                date: widget.date,
+                userId: userId,
+              ),
+            ),
+          );
 
     return Scaffold(
       body: Container(
@@ -93,71 +129,119 @@ class _TimeSlotScreenState extends State<TimeSlotScreen> {
                 ),
               const SizedBox(height: 8),
               Expanded(
-                child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: isNarrow ? 12 : 20),
-                  padding: EdgeInsets.all(isNarrow ? 12 : 20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardWhite,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ListView.builder(
-                    itemCount: _slots.length,
-                    itemBuilder: (context, index) {
-                      final slot = _slots[index];
-                      final start = slot['start']!;
-                      final end = slot['end']!;
-                      final isSelected = _selectedSlotIndices.contains(index);
+                child: intervalsAsync.when(
+                  data: (intervals) {
+                    final blockedIndices = _blockedSlotIndices(intervals);
+                    _selectedSlotIndices.removeAll(blockedIndices);
 
-                      return InkWell(
-                        onTap: () => _toggleSlot(index),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? AppTheme.primaryYellow
-                                        : Colors.grey,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                  color: isSelected
-                                      ? AppTheme.primaryYellow
-                                      : Colors.transparent,
-                                ),
-                                child: isSelected
-                                    ? const Icon(
-                                        Icons.check,
-                                        size: 16,
-                                        color: Colors.black,
-                                      )
-                                    : null,
-                              ),
-                              const SizedBox(width: 16),
-                              Text(
-                                '${start.toString().padLeft(2, '0')}:00 - ${end.toString().padLeft(2, '0')}:00',
-                                style: TextStyle(
-                                  fontSize: isNarrow ? 14 : 16,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
+                    return Container(
+                      margin:
+                          EdgeInsets.symmetric(horizontal: isNarrow ? 12 : 20),
+                      padding: EdgeInsets.all(isNarrow ? 12 : 20),
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardWhite,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                      );
-                    },
+                        ],
+                      ),
+                      child: ListView.builder(
+                        itemCount: _slots.length,
+                        itemBuilder: (context, index) {
+                          final slot = _slots[index];
+                          final start = slot['start']!;
+                          final end = slot['end']!;
+                          final isSelected =
+                              _selectedSlotIndices.contains(index);
+                          final isBlocked = blockedIndices.contains(index);
+
+                          return InkWell(
+                            onTap: isBlocked
+                                ? null
+                                : () => _toggleSlot(index, blockedIndices),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: isBlocked
+                                            ? Colors.red.shade700
+                                            : isSelected
+                                                ? AppTheme.primaryYellow
+                                                : Colors.grey,
+                                        width: 2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                      color: isBlocked
+                                          ? Colors.red.shade100
+                                          : isSelected
+                                              ? AppTheme.primaryYellow
+                                              : Colors.transparent,
+                                    ),
+                                    child: isBlocked
+                                        ? Icon(
+                                            Icons.block,
+                                            size: 16,
+                                            color: Colors.red.shade700,
+                                          )
+                                        : isSelected
+                                            ? const Icon(
+                                                Icons.check,
+                                                size: 16,
+                                                color: Colors.black,
+                                              )
+                                            : null,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Text(
+                                      '${start.toString().padLeft(2, '0')}:00 - ${end.toString().padLeft(2, '0')}:00',
+                                      style: TextStyle(
+                                        fontSize: isNarrow ? 14 : 16,
+                                        color: isBlocked
+                                            ? Colors.red.shade800
+                                            : Colors.black87,
+                                        fontWeight: isBlocked
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isBlocked)
+                                    Text(
+                                      'Zauzeto',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.red.shade800,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, _) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        'Greska u ucitavanju termina: $error',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -188,5 +272,29 @@ class _TimeSlotScreenState extends State<TimeSlotScreen> {
         ),
       ),
     );
+  }
+
+  Set<int> _blockedSlotIndices(List<ReservedInterval> intervals) {
+    final blocked = <int>{};
+    for (var index = 0; index < _slots.length; index++) {
+      final slot = _slots[index];
+      final slotStart = DateTime(
+        widget.date.year,
+        widget.date.month,
+        widget.date.day,
+        slot['start']!,
+      );
+      final slotEnd = DateTime(
+        widget.date.year,
+        widget.date.month,
+        widget.date.day,
+        slot['end']!,
+      );
+
+      if (intervals.any((interval) => interval.overlaps(slotStart, slotEnd))) {
+        blocked.add(index);
+      }
+    }
+    return blocked;
   }
 }
