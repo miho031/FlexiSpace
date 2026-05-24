@@ -133,7 +133,10 @@ class _DrawerItem extends StatelessWidget {
     final isSelected = currentPath == path || currentPath.startsWith('$path/');
 
     return ListTile(
-      leading: Icon(icon, color: isSelected ? AppTheme.primaryYellow : Colors.black87),
+      leading: Icon(
+        icon,
+        color: isSelected ? AppTheme.primaryYellow : Colors.black87,
+      ),
       title: Text(
         label,
         style: TextStyle(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/reservation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_messages.dart';
 import '../application/admin_providers.dart';
 import '../data/admin_repository.dart';
 
@@ -15,9 +16,15 @@ class AdminReservationsScreen extends ConsumerWidget {
 
     return reservationsAsync.when(
       data: (reservations) {
-        final pending = reservations.where((r) => r.status == ReservationStatus.pending).toList();
-        final approved = reservations.where((r) => r.status == ReservationStatus.approved).toList();
-        final rejected = reservations.where((r) => r.status == ReservationStatus.rejected).toList();
+        final pending = reservations
+            .where((r) => r.status == ReservationStatus.pending)
+            .toList();
+        final approved = reservations
+            .where((r) => r.status == ReservationStatus.approved)
+            .toList();
+        final rejected = reservations
+            .where((r) => r.status == ReservationStatus.rejected)
+            .toList();
 
         if (reservations.isEmpty) {
           return Center(
@@ -54,19 +61,22 @@ class AdminReservationsScreen extends ConsumerWidget {
                     _ReservationList(
                       reservations: pending,
                       showActions: true,
-                      onRefresh: () => ref.invalidate(adminReservationsProvider),
+                      onRefresh: () =>
+                          ref.invalidate(adminReservationsProvider),
                       parentRef: ref,
                     ),
                     _ReservationList(
                       reservations: approved,
                       showActions: false,
-                      onRefresh: () => ref.invalidate(adminReservationsProvider),
+                      onRefresh: () =>
+                          ref.invalidate(adminReservationsProvider),
                       parentRef: ref,
                     ),
                     _ReservationList(
                       reservations: rejected,
                       showActions: false,
-                      onRefresh: () => ref.invalidate(adminReservationsProvider),
+                      onRefresh: () =>
+                          ref.invalidate(adminReservationsProvider),
                       parentRef: ref,
                     ),
                   ],
@@ -137,46 +147,54 @@ class _ReservationList extends ConsumerWidget {
           return _AdminReservationCard(
             reservation: reservations[index],
             showActions: showActions,
-            onApproved: () => _approve(parentRef, context, reservations[index].id, onRefresh),
-            onRejected: () => _reject(parentRef, context, reservations[index].id, onRefresh),
+            onApproved: () =>
+                _approve(parentRef, context, reservations[index].id, onRefresh),
+            onRejected: () =>
+                _reject(parentRef, context, reservations[index].id, onRefresh),
           );
         },
       ),
     );
   }
 
-  Future<void> _approve(WidgetRef ref, BuildContext context, String id, VoidCallback onRefresh) async {
+  Future<void> _approve(
+    WidgetRef ref,
+    BuildContext context,
+    String id,
+    VoidCallback onRefresh,
+  ) async {
     try {
       await ref.read(adminRepositoryProvider).approveReservation(id);
       onRefresh();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rezervacija odobrena'), backgroundColor: Colors.green),
-        );
+        AppSnackBars.showSuccess(context, 'Rezervacija je odobrena.');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
       }
     }
   }
 
-  Future<void> _reject(WidgetRef ref, BuildContext context, String id, VoidCallback onRefresh) async {
+  Future<void> _reject(
+    WidgetRef ref,
+    BuildContext context,
+    String id,
+    VoidCallback onRefresh,
+  ) async {
     try {
       await ref.read(adminRepositoryProvider).rejectReservation(id);
       onRefresh();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rezervacija odbijena'), backgroundColor: Colors.orange),
-        );
+        AppSnackBars.showWarning(context, 'Rezervacija je odbijena.');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
       }
     }
   }
@@ -229,7 +247,10 @@ class _AdminReservationCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),

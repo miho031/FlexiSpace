@@ -22,4 +22,3 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   }
   return SupabaseClient(url, anonKey);
 });
-

@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/models/room.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../spaces/application/spaces_providers.dart';
 import '../application/admin_providers.dart';
 
@@ -31,6 +32,7 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
   late final TextEditingController _priceController;
   late final TextEditingController _capacityController;
   late final TextEditingController _imageUrlController;
+  late final TextEditingController _wifiPasswordController;
   Uint8List? _selectedImageBytes;
   String? _selectedImageName;
   bool _hasWifi = false;
@@ -58,6 +60,9 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
       text: r?.capacity.toString() ?? '1',
     );
     _imageUrlController = TextEditingController(text: r?.imagePath ?? '');
+    _wifiPasswordController = TextEditingController(
+      text: r?.wifiPassword ?? '',
+    );
     _hasWifi = r?.hasWifi ?? false;
     _hasWater = r?.hasWater ?? false;
   }
@@ -69,6 +74,7 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
     _priceController.dispose();
     _capacityController.dispose();
     _imageUrlController.dispose();
+    _wifiPasswordController.dispose();
     super.dispose();
   }
 
@@ -263,6 +269,16 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
               ),
             ],
           ),
+          if (_hasWifi) ...[
+            const SizedBox(height: 16),
+            _buildLabel('Wi-Fi sifra'),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _wifiPasswordController,
+              decoration: AppTheme.inputDecoration('npr. FlexiSpace-2026'),
+              textInputAction: TextInputAction.next,
+            ),
+          ],
           const SizedBox(height: 32),
           SizedBox(
             height: 50,
@@ -428,9 +444,11 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppSnackBars.showError(
           context,
-        ).showSnackBar(SnackBar(content: Text('Greška pri odabiru slike: $e')));
+          e,
+          fallback: 'Slika nije odabrana. Pokusajte ponovno.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isPickingImage = false);
@@ -455,6 +473,7 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
     final price = hourlyPrice / 60;
     final capacity = int.tryParse(_capacityController.text) ?? 1;
     final imageUrl = _imageUrlController.text.trim();
+    final wifiPassword = _hasWifi ? _wifiPasswordController.text.trim() : '';
 
     setState(() => _isLoading = true);
     try {
@@ -471,6 +490,7 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
           hasWifi: _hasWifi,
           hasWater: _hasWater,
           imageUrl: savedImageUrl,
+          wifiPassword: wifiPassword,
           type: _type,
         );
       } else {
@@ -482,27 +502,29 @@ class _AdminSpaceFormScreenState extends ConsumerState<AdminSpaceFormScreen> {
           hasWifi: _hasWifi,
           hasWater: _hasWater,
           imageUrl: savedImageUrl.isEmpty ? null : savedImageUrl,
+          wifiPassword: wifiPassword.isEmpty ? null : wifiPassword,
           type: _type,
         );
       }
       ref.invalidate(adminSpacesProvider);
       ref.invalidate(roomsProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.isEditing ? 'Prostorija ažurirana' : 'Prostorija dodana',
-            ),
-            backgroundColor: Colors.green,
-          ),
+        AppSnackBars.showSuccess(
+          context,
+          widget.isEditing
+              ? 'Prostorija je azurirana.'
+              : 'Prostorija je dodana.',
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppSnackBars.showError(
           context,
-        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
+          e,
+          fallback:
+              'Prostorija nije spremljena. Provjerite podatke i pokusajte ponovno.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

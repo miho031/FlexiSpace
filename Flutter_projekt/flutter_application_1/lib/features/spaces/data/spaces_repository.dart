@@ -12,7 +12,17 @@ class SpacesRepository {
   Future<List<Room>> getActiveSpaces() async {
     final res = await _supabase
         .from('spaces')
-        .select()
+        .select('''
+          id,
+          name,
+          address,
+          price_per_minute,
+          capacity,
+          has_wifi,
+          has_water,
+          is_active,
+          image_url
+        ''')
         .eq('is_active', true)
         .order('name');
 

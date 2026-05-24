@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../profile/application/profile_providers.dart';
 import '../application/auth_providers.dart';
 
@@ -35,39 +36,32 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final confirm = _confirmController.text;
 
     if (email.isEmpty || password.isEmpty || confirm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sva polja su obavezna.')),
-      );
+      AppSnackBars.showWarning(context, 'Sva polja su obavezna.');
       return;
     }
 
     if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Lozinka mora imati najmanje 6 znakova.'),
-        ),
+      AppSnackBars.showWarning(
+        context,
+        'Lozinka mora imati najmanje 6 znakova.',
       );
       return;
     }
 
     if (password != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lozinke se moraju podudarati.')),
-      );
+      AppSnackBars.showWarning(context, 'Lozinke se moraju podudarati.');
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      final userId = await ref.read(authRepositoryProvider).signUp(
-            email: email,
-            password: password,
-          );
+      final userId = await ref
+          .read(authRepositoryProvider)
+          .signUp(email: email, password: password);
       if (userId != null) {
-        await ref.read(profileRepositoryProvider).createProfileIfNotExists(
-              userId,
-              email: email,
-            );
+        await ref
+            .read(profileRepositoryProvider)
+            .createProfileIfNotExists(userId, email: email);
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -80,27 +74,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_authErrorMessage(e))),
+        AppSnackBars.showError(
+          context,
+          e,
+          fallback:
+              'Registracija nije uspjela. Provjerite podatke i pokusajte ponovno.',
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  String _authErrorMessage(Object e) {
-    final msg = e.toString().toLowerCase();
-    if (msg.contains('invalid login credentials')) {
-      return 'Netočan email ili lozinka.';
-    }
-    if (msg.contains('email not confirmed')) {
-      return 'Potvrdite email adresu putem linka koji smo vam poslali.';
-    }
-    if (msg.contains('user already registered')) {
-      return 'Korisnik s ovim emailom već postoji. Prijavite se.';
-    }
-    return 'Registracija neuspješna: $e';
   }
 
   @override
@@ -147,20 +130,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 TextField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  decoration: AppTheme.inputDecoration('lozinka')
-                      .copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.black54,
-                          ),
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
+                  decoration: AppTheme.inputDecoration('lozinka').copyWith(
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.black54,
                       ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(

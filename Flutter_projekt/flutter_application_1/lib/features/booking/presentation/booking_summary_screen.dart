@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/models/booking_data.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../profile/application/profile_providers.dart';
 import '../../reservations/application/reservation_providers.dart';
 
@@ -52,7 +53,7 @@ class _BookingSummaryScreenState extends ConsumerState<BookingSummaryScreen> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -141,46 +142,38 @@ class _BookingSummaryScreenState extends ConsumerState<BookingSummaryScreen> {
   Future<void> _onBooking(BookingData bookingData) async {
     final user = ref.read(supabaseClientProvider).auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Morate biti prijavljeni.')),
-      );
+      AppSnackBars.showWarning(context, 'Morate biti prijavljeni.');
       return;
     }
 
     final userId = user.id;
     setState(() => _isLoading = true);
     try {
-      await ref.read(profileRepositoryProvider).createProfileIfNotExists(
-            userId,
-            email: user.email,
-          );
-      await ref.read(reservationRepositoryProvider).createReservations(
-            bookingData,
-            userId,
-          );
+      await ref
+          .read(profileRepositoryProvider)
+          .createProfileIfNotExists(userId, email: user.email);
+      await ref
+          .read(reservationRepositoryProvider)
+          .createReservations(bookingData, userId);
       ref.invalidate(myReservationsProvider(userId));
       ref.invalidate(
-        reservedIntervalsProvider(
-          (
-            spaceId: bookingData.room.id,
-            date: bookingData.date,
-            userId: userId,
-          ),
-        ),
+        reservedIntervalsProvider((
+          spaceId: bookingData.room.id,
+          date: bookingData.date,
+          userId: userId,
+        )),
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rezervacija uspjesno kreirana!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        AppSnackBars.showSuccess(context, 'Rezervacija je uspjesno kreirana.');
         context.go('/rooms');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greska: $e')),
+        AppSnackBars.showError(
+          context,
+          e,
+          fallback:
+              'Rezervacija nije spremljena. Osvjezite termine i pokusajte ponovno.',
         );
       }
     } finally {
@@ -208,14 +201,14 @@ class _RoomSummaryImage extends StatelessWidget {
       return Image.network(
         imagePath,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => fallback,
+        errorBuilder: (context, error, stackTrace) => fallback,
       );
     }
 
     return Image.asset(
       imagePath,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => fallback,
+      errorBuilder: (context, error, stackTrace) => fallback,
     );
   }
 }

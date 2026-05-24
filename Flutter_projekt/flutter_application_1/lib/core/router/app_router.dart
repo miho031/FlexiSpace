@@ -17,9 +17,11 @@ import '../../features/booking/presentation/room_detail_screen.dart';
 import '../../features/booking/presentation/time_slot_screen.dart';
 import '../../features/profile/application/profile_providers.dart';
 import '../../features/reservations/presentation/my_reservations_screen.dart';
+import '../../features/reservations/presentation/reservation_access_screen.dart';
 import '../../rezervacije_screen.dart';
 import '../widgets/main_shell.dart';
 import '../models/booking_data.dart';
+import '../models/reservation.dart';
 import '../models/room.dart';
 import '../supabase/supabase_client.dart';
 
@@ -53,7 +55,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isLoginRoute = loc == '/login';
       final isRegisterRoute = loc == '/register';
       final isRoomsRoute = loc.startsWith('/rooms');
-      final isReservationsRoute = loc == '/reservations';
+      final isReservationsRoute = loc.startsWith('/reservations');
       final isAdminRoute = loc.startsWith('/admin');
 
       if (!isLoggedIn) {
@@ -66,7 +68,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (isAdminRoute) {
         final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
         if (userId == null) return '/rooms';
-        final profile = await ref.read(profileRepositoryProvider).getProfile(userId);
+        final profile = await ref
+            .read(profileRepositoryProvider)
+            .getProfile(userId);
         if (profile?.role != 'admin') return '/rooms';
       }
 
@@ -75,18 +79,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return '/rooms';
     },
     routes: <RouteBase>[
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: '/',
-        redirect: (context, state) =>
-            state.uri.path == '/' ? '/rooms' : null,
+        redirect: (context, state) => state.uri.path == '/' ? '/rooms' : null,
         routes: [
           ShellRoute(
             builder: (context, state, child) => MainShell(child: child),
@@ -117,7 +117,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         path: 'summary',
                         builder: (context, state) {
                           final bookingData = state.extra as BookingData?;
-                          if (bookingData == null) return const SizedBox.shrink();
+                          if (bookingData == null) {
+                            return const SizedBox.shrink();
+                          }
                           return BookingSummaryScreen(bookingData: bookingData);
                         },
                       ),
@@ -128,6 +130,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'reservations',
                 builder: (context, state) => const MyReservationsScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':reservationId',
+                    builder: (context, state) {
+                      final reservation = state.extra as Reservation?;
+                      if (reservation == null ||
+                          reservation.status != ReservationStatus.approved) {
+                        return const ReservationAccessErrorScreen();
+                      }
+                      return ReservationAccessScreen(reservation: reservation);
+                    },
+                  ),
+                ],
               ),
             ],
           ),

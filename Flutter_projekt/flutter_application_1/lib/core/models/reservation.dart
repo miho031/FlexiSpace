@@ -1,11 +1,7 @@
 import 'room.dart';
 
 /// Status rezervacije prema PROJECT_CONTEXT
-enum ReservationStatus {
-  pending,
-  approved,
-  rejected,
-}
+enum ReservationStatus { pending, approved, rejected }
 
 /// Model rezervacije za prikaz u "Moje rezervacije"
 class Reservation {

@@ -9,8 +9,16 @@ abstract class ProfileRepository {
   Future<List<Profile>> getAllProfiles();
 
   /// Kreira ili ažurira profil nakon registracije.
-  Future<void> createProfileIfNotExists(String userId, {String? email, String? fullName});
+  Future<void> createProfileIfNotExists(
+    String userId, {
+    String? email,
+    String? fullName,
+  });
 
   /// Ažurira profil (role, membership_active - samo admin).
-  Future<void> updateProfile(String userId, {String? role, bool? membershipActive});
+  Future<void> updateProfile(
+    String userId, {
+    String? role,
+    bool? membershipActive,
+  });
 }

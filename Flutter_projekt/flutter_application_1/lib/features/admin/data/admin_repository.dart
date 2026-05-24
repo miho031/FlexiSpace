@@ -42,8 +42,8 @@ class AdminRepository {
           : null;
       final pricePerMin = spacesData != null
           ? (spacesData as Map<String, dynamic>)['price_per_minute'] != null
-              ? (spacesData['price_per_minute'] as num).toDouble()
-              : 0.0
+                ? (spacesData['price_per_minute'] as num).toDouble()
+                : 0.0
           : 0.0;
       final start = DateTime.parse(map['start_time'] as String);
       final end = DateTime.parse(map['end_time'] as String);
@@ -103,7 +103,10 @@ class AdminRepository {
   Future<void> approveReservation(String reservationId) async {
     await _supabase
         .from('reservations')
-        .update({'status': 'approved', 'updated_at': DateTime.now().toIso8601String()})
+        .update({
+          'status': 'approved',
+          'updated_at': DateTime.now().toIso8601String(),
+        })
         .eq('id', reservationId);
   }
 
@@ -111,7 +114,10 @@ class AdminRepository {
   Future<void> rejectReservation(String reservationId) async {
     await _supabase
         .from('reservations')
-        .update({'status': 'rejected', 'updated_at': DateTime.now().toIso8601String()})
+        .update({
+          'status': 'rejected',
+          'updated_at': DateTime.now().toIso8601String(),
+        })
         .eq('id', reservationId);
   }
 
@@ -131,6 +137,7 @@ class AdminRepository {
         hasWifi: map['has_wifi'] as bool? ?? false,
         hasWater: map['has_water'] as bool? ?? false,
         isActive: map['is_active'] as bool? ?? true,
+        wifiPassword: map['wifi_password'] as String? ?? '',
       );
     }).toList();
   }
@@ -144,18 +151,25 @@ class AdminRepository {
     bool hasWifi = false,
     bool hasWater = false,
     String? imageUrl,
+    String? wifiPassword,
     String type = 'meeting_room',
   }) async {
-    final res = await _supabase.from('spaces').insert({
-      'name': name,
-      'address': address,
-      'price_per_minute': pricePerMinute,
-      'capacity': capacity,
-      'has_wifi': hasWifi,
-      'has_water': hasWater,
-      if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
-      'type': type,
-    }).select().single();
+    final res = await _supabase
+        .from('spaces')
+        .insert({
+          'name': name,
+          'address': address,
+          'price_per_minute': pricePerMinute,
+          'capacity': capacity,
+          'has_wifi': hasWifi,
+          'has_water': hasWater,
+          if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
+          if (hasWifi && wifiPassword != null && wifiPassword.isNotEmpty)
+            'wifi_password': wifiPassword,
+          'type': type,
+        })
+        .select()
+        .single();
 
     final map = Map<String, dynamic>.from(res as Map);
     return Room(
@@ -168,6 +182,7 @@ class AdminRepository {
       hasWifi: map['has_wifi'] as bool? ?? false,
       hasWater: map['has_water'] as bool? ?? false,
       isActive: map['is_active'] as bool? ?? true,
+      wifiPassword: map['wifi_password'] as String? ?? '',
     );
   }
 
@@ -182,9 +197,12 @@ class AdminRepository {
     bool? hasWater,
     bool? isActive,
     String? imageUrl,
+    String? wifiPassword,
     String? type,
   }) async {
-    final updates = <String, dynamic>{'updated_at': DateTime.now().toIso8601String()};
+    final updates = <String, dynamic>{
+      'updated_at': DateTime.now().toIso8601String(),
+    };
     if (name != null) updates['name'] = name;
     if (address != null) updates['address'] = address;
     if (pricePerMinute != null) updates['price_per_minute'] = pricePerMinute;
@@ -192,7 +210,12 @@ class AdminRepository {
     if (hasWifi != null) updates['has_wifi'] = hasWifi;
     if (hasWater != null) updates['has_water'] = hasWater;
     if (isActive != null) updates['is_active'] = isActive;
-    if (imageUrl != null) updates['image_url'] = imageUrl.isEmpty ? null : imageUrl;
+    if (imageUrl != null) {
+      updates['image_url'] = imageUrl.isEmpty ? null : imageUrl;
+    }
+    if (wifiPassword != null) {
+      updates['wifi_password'] = wifiPassword.isEmpty ? null : wifiPassword;
+    }
     if (type != null) updates['type'] = type;
 
     await _supabase.from('spaces').update(updates).eq('id', spaceId);
@@ -200,10 +223,13 @@ class AdminRepository {
 
   /// Briše prostoriju (ili deaktivira).
   Future<void> deleteSpace(String spaceId) async {
-    await _supabase.from('spaces').update({
-      'is_active': false,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', spaceId);
+    await _supabase
+        .from('spaces')
+        .update({
+          'is_active': false,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', spaceId);
   }
 }
 

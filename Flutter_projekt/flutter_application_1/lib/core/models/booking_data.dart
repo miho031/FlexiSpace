@@ -40,14 +40,15 @@ class BookingData {
     int startMinute = 0,
     int durationMinutes = 60,
     List<BookingTimeRange>? timeRanges,
-  }) : timeRanges = timeRanges ??
-            [
-              BookingTimeRange(
-                startHour: startHour,
-                startMinute: startMinute,
-                durationMinutes: durationMinutes,
-              ),
-            ];
+  }) : timeRanges =
+           timeRanges ??
+           [
+             BookingTimeRange(
+               startHour: startHour,
+               startMinute: startMinute,
+               durationMinutes: durationMinutes,
+             ),
+           ];
 
   BookingTimeRange get firstRange => timeRanges.first;
 
@@ -55,12 +56,11 @@ class BookingData {
     Room? room,
     DateTime? date,
     List<BookingTimeRange>? timeRanges,
-  }) =>
-      BookingData(
-        room: room ?? this.room,
-        date: date ?? this.date,
-        timeRanges: timeRanges ?? this.timeRanges,
-      );
+  }) => BookingData(
+    room: room ?? this.room,
+    date: date ?? this.date,
+    timeRanges: timeRanges ?? this.timeRanges,
+  );
 
   int get durationMinutes =>
       timeRanges.fold(0, (total, range) => total + range.durationMinutes);

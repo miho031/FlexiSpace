@@ -76,7 +76,8 @@ class SupabaseReservationRepository implements ReservationRepository {
             has_wifi,
             has_water,
             is_active,
-            image_url
+            image_url,
+            wifi_password
           )
         ''');
 
@@ -105,7 +106,8 @@ class SupabaseReservationRepository implements ReservationRepository {
             has_wifi,
             has_water,
             is_active,
-            image_url
+            image_url,
+            wifi_password
           )
         ''')
         .eq('user_id', userId)
@@ -182,6 +184,7 @@ class SupabaseReservationRepository implements ReservationRepository {
       hasWifi: map['has_wifi'] as bool? ?? false,
       hasWater: map['has_water'] as bool? ?? false,
       isActive: map['is_active'] as bool? ?? true,
+      wifiPassword: map['wifi_password'] as String? ?? '',
     );
   }
 

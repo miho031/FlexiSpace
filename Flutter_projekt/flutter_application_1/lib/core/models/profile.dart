@@ -27,10 +27,10 @@ class Profile {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'full_name': fullName,
-        'role': role,
-        'membership_active': membershipActive,
-        if (email != null) 'email': email,
-      };
+    'id': id,
+    'full_name': fullName,
+    'role': role,
+    'membership_active': membershipActive,
+    if (email != null) 'email': email,
+  };
 }

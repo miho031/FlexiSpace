@@ -45,8 +45,14 @@ class AdminShell extends StatelessWidget {
     );
   }
 
-  Widget _buildTab(BuildContext context, String label, String route, String currentPath) {
-    final isSelected = currentPath == route || currentPath.startsWith('$route/');
+  Widget _buildTab(
+    BuildContext context,
+    String label,
+    String route,
+    String currentPath,
+  ) {
+    final isSelected =
+        currentPath == route || currentPath.startsWith('$route/');
     return Expanded(
       child: InkWell(
         onTap: () => context.go(route),

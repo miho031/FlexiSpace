@@ -24,10 +24,7 @@ class SupabaseAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final res = await _supabase.auth.signUp(
-      email: email,
-      password: password,
-    );
+    final res = await _supabase.auth.signUp(email: email, password: password);
     return res.user?.id;
   }
 
@@ -36,4 +33,3 @@ class SupabaseAuthRepository implements AuthRepository {
     await _supabase.auth.signOut();
   }
 }
-

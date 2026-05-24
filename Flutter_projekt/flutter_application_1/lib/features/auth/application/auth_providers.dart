@@ -29,4 +29,3 @@ final authStateChangesStreamProvider = Provider<Stream<Session?>>((ref) {
   final supabase = ref.watch(supabaseClientProvider);
   return supabase.auth.onAuthStateChange.map((event) => event.session);
 });
-

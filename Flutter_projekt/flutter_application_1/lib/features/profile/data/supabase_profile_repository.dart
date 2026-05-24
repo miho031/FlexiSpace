@@ -30,7 +30,11 @@ class SupabaseProfileRepository implements ProfileRepository {
   }
 
   @override
-  Future<void> createProfileIfNotExists(String userId, {String? email, String? fullName}) async {
+  Future<void> createProfileIfNotExists(
+    String userId, {
+    String? email,
+    String? fullName,
+  }) async {
     final existing = await getProfile(userId);
     if (existing != null) return;
 
@@ -49,9 +53,13 @@ class SupabaseProfileRepository implements ProfileRepository {
     String? role,
     bool? membershipActive,
   }) async {
-    final updates = <String, dynamic>{'updated_at': DateTime.now().toIso8601String()};
+    final updates = <String, dynamic>{
+      'updated_at': DateTime.now().toIso8601String(),
+    };
     if (role != null) updates['role'] = role;
-    if (membershipActive != null) updates['membership_active'] = membershipActive;
+    if (membershipActive != null) {
+      updates['membership_active'] = membershipActive;
+    }
 
     await _supabase.from('profiles').update(updates).eq('id', userId);
   }

@@ -57,75 +57,88 @@ class _RoomsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: AppTheme.gradientBackground,
-        child: SafeArea(
-          child: Column(
-            children: [
-              // App bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Scaffold.of(context).openDrawer(),
-                      icon: const Icon(Icons.menu, color: Colors.black),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'Rezerviraj',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
+      width: double.infinity,
+      height: double.infinity,
+      decoration: AppTheme.gradientBackground,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // App bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                    icon: const Icon(Icons.menu, color: Colors.black),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Rezerviraj',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.search, color: Colors.black),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.location_on, color: Colors.black),
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.search, color: Colors.black),
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.location_on, color: Colors.black),
+                  ),
+                ],
               ),
-              // Lista prostorija
-              Expanded(
-                child: rooms.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.meeting_room_outlined, size: 64, color: Colors.grey.shade400),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Nema dostupnih prostorija',
-                              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            ),
+            // Lista prostorija
+            Expanded(
+              child: rooms.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.meeting_room_outlined,
+                            size: 64,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Nema dostupnih prostorija',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
                             ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        itemCount: rooms.length,
-                        itemBuilder: (context, index) {
-                          return _RoomCard(
-                            room: rooms[index],
-                            onTap: () {
-                              context.push('/rooms/${rooms[index].id}', extra: rooms[index]);
-                            },
-                          );
-                        },
+                          ),
+                        ],
                       ),
-              ),
-            ],
-          ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      itemCount: rooms.length,
+                      itemBuilder: (context, index) {
+                        return _RoomCard(
+                          room: rooms[index],
+                          onTap: () {
+                            context.push(
+                              '/rooms/${rooms[index].id}',
+                              extra: rooms[index],
+                            );
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
+      ),
     );
   }
 }
@@ -148,7 +161,7 @@ class _RoomCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -181,16 +194,27 @@ class _RoomCard extends StatelessWidget {
                       if (room.hasWifi)
                         const Padding(
                           padding: EdgeInsets.only(right: 8),
-                          child: Icon(Icons.wifi, size: 18, color: Colors.black54),
+                          child: Icon(
+                            Icons.wifi,
+                            size: 18,
+                            color: Colors.black54,
+                          ),
                         ),
                       if (room.hasWater)
-                        const Icon(Icons.videocam, size: 18, color: Colors.black54),
+                        const Icon(
+                          Icons.videocam,
+                          size: 18,
+                          color: Colors.black54,
+                        ),
                       const Spacer(),
                       const Icon(Icons.groups, size: 18, color: Colors.black54),
                       const SizedBox(width: 4),
                       Text(
                         '${room.capacity}',
-                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
                       ),
                     ],
                   ),
@@ -221,8 +245,24 @@ class _RoomThumbnail extends StatelessWidget {
       child: imagePath.isEmpty
           ? Icon(Icons.meeting_room, color: Colors.grey.shade600, size: 32)
           : imagePath.startsWith('http')
-              ? Image.network(imagePath, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.meeting_room, color: Colors.grey.shade600, size: 32))
-              : Image.asset(imagePath, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.meeting_room, color: Colors.grey.shade600, size: 32)),
+          ? Image.network(
+              imagePath,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.meeting_room,
+                color: Colors.grey.shade600,
+                size: 32,
+              ),
+            )
+          : Image.asset(
+              imagePath,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.meeting_room,
+                color: Colors.grey.shade600,
+                size: 32,
+              ),
+            ),
     );
   }
 }

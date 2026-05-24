@@ -18,13 +18,36 @@ class MockProfileRepository implements ProfileRepository {
   Future<List<Profile>> getAllProfiles() async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     return [
-      Profile(id: '1', fullName: 'Admin User', role: 'admin', membershipActive: true),
-      Profile(id: '2', fullName: 'Member User', role: 'member', membershipActive: true),
+      Profile(
+        id: '1',
+        fullName: 'Admin User',
+        role: 'admin',
+        membershipActive: true,
+      ),
+      Profile(
+        id: '2',
+        fullName: 'Member User',
+        role: 'member',
+        membershipActive: true,
+      ),
     ];
   }
 
   @override
-  Future<void> updateProfile(String userId, {String? role, bool? membershipActive}) async {
+  Future<void> createProfileIfNotExists(
+    String userId, {
+    String? email,
+    String? fullName,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+  }
+
+  @override
+  Future<void> updateProfile(
+    String userId, {
+    String? role,
+    bool? membershipActive,
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
   }
 }

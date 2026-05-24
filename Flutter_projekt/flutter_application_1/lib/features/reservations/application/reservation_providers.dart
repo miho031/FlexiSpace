@@ -9,19 +9,22 @@ final reservationRepositoryProvider = Provider<ReservationRepository>((ref) {
   return SupabaseReservationRepository(ref.read(supabaseClientProvider));
 });
 
-final myReservationsProvider =
-    FutureProvider.family<List<Reservation>, String>((ref, userId) async {
-  final repo = ref.read(reservationRepositoryProvider);
-  return repo.getMyReservations(userId);
-});
+final myReservationsProvider = FutureProvider.family<List<Reservation>, String>(
+  (ref, userId) async {
+    final repo = ref.read(reservationRepositoryProvider);
+    return repo.getMyReservations(userId);
+  },
+);
 
-final reservedIntervalsProvider = FutureProvider.family<
-    List<ReservedInterval>,
-    ({DateTime date, String spaceId, String userId})>((ref, params) async {
-  final repo = ref.read(reservationRepositoryProvider);
-  return repo.getReservedIntervals(
-    spaceId: params.spaceId,
-    date: params.date,
-    userId: params.userId,
-  );
-});
+final reservedIntervalsProvider =
+    FutureProvider.family<
+      List<ReservedInterval>,
+      ({DateTime date, String spaceId, String userId})
+    >((ref, params) async {
+      final repo = ref.read(reservationRepositoryProvider);
+      return repo.getReservedIntervals(
+        spaceId: params.spaceId,
+        date: params.date,
+        userId: params.userId,
+      );
+    });

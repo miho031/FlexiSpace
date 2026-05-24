@@ -67,7 +67,8 @@ class AdminUsersScreen extends ConsumerWidget {
     String role,
   ) async {
     final currentUserId = ref.read(supabaseClientProvider).auth.currentUser?.id;
-    final isRemovingOwnAdmin = currentUserId == profile.id &&
+    final isRemovingOwnAdmin =
+        currentUserId == profile.id &&
         profile.role == 'admin' &&
         role != 'admin';
 
@@ -84,15 +85,15 @@ class AdminUsersScreen extends ConsumerWidget {
       ref.invalidate(adminProfilesProvider);
       ref.invalidate(currentProfileProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Uloga ažurirana')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Uloga ažurirana')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
       }
     }
   }
@@ -121,9 +122,15 @@ class AdminUsersScreen extends ConsumerWidget {
     return result ?? false;
   }
 
-  Future<void> _toggleMembership(WidgetRef ref, BuildContext context, Profile profile) async {
+  Future<void> _toggleMembership(
+    WidgetRef ref,
+    BuildContext context,
+    Profile profile,
+  ) async {
     try {
-      await ref.read(profileRepositoryProvider).updateProfile(
+      await ref
+          .read(profileRepositoryProvider)
+          .updateProfile(
             profile.id,
             membershipActive: !profile.membershipActive,
           );
@@ -132,16 +139,18 @@ class AdminUsersScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              profile.membershipActive ? 'Članstvo deaktivirano' : 'Članstvo aktivirano',
+              profile.membershipActive
+                  ? 'Članstvo deaktivirano'
+                  : 'Članstvo aktivirano',
             ),
           ),
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
       }
     }
   }
@@ -190,7 +199,10 @@ class _UserCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: (profile.role == 'admin' ? Colors.blue : Colors.grey)
                       .withValues(alpha: 0.2),
@@ -201,7 +213,9 @@ class _UserCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: profile.role == 'admin' ? Colors.blue : Colors.grey.shade700,
+                    color: profile.role == 'admin'
+                        ? Colors.blue
+                        : Colors.grey.shade700,
                   ),
                 ),
               ),
@@ -238,7 +252,9 @@ class _UserCard extends StatelessWidget {
               ),
               TextButton(
                 onPressed: onMembershipToggled,
-                child: Text(profile.membershipActive ? 'Deaktiviraj' : 'Aktiviraj'),
+                child: Text(
+                  profile.membershipActive ? 'Deaktiviraj' : 'Aktiviraj',
+                ),
               ),
             ],
           ),

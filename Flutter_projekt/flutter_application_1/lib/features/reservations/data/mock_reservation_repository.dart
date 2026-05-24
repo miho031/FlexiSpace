@@ -32,7 +32,8 @@ class MockReservationRepository implements ReservationRepository {
         startTime: startTime,
         endTime: endTime,
         status: ReservationStatus.pending,
-        totalPrice: bookingData.room.pricePerMinute *
+        totalPrice:
+            bookingData.room.pricePerMinute *
             endTime.difference(startTime).inMinutes,
       );
     }).toList();
@@ -59,12 +60,14 @@ class MockReservationRepository implements ReservationRepository {
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     return _mockReservations
-        .where((reservation) =>
-            reservation.room.id == spaceId &&
-            reservation.status != ReservationStatus.rejected &&
-            reservation.startTime.year == date.year &&
-            reservation.startTime.month == date.month &&
-            reservation.startTime.day == date.day)
+        .where(
+          (reservation) =>
+              reservation.room.id == spaceId &&
+              reservation.status != ReservationStatus.rejected &&
+              reservation.startTime.year == date.year &&
+              reservation.startTime.month == date.month &&
+              reservation.startTime.day == date.day,
+        )
         .map(
           (reservation) => ReservedInterval(
             startTime: reservation.startTime,

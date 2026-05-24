@@ -10,7 +10,9 @@ final adminRepositoryProvider = Provider<AdminRepository>((ref) {
   return AdminRepository(ref.read(supabaseClientProvider));
 });
 
-final adminReservationsProvider = FutureProvider<List<AdminReservationView>>((ref) async {
+final adminReservationsProvider = FutureProvider<List<AdminReservationView>>((
+  ref,
+) async {
   return ref.read(adminRepositoryProvider).getAllReservations();
 });
 

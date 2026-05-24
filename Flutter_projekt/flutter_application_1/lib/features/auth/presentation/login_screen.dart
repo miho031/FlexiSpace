@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../profile/application/profile_providers.dart';
 import '../application/auth_providers.dart';
 
@@ -31,44 +32,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email i lozinka su obavezni.')),
-      );
+      AppSnackBars.showWarning(context, 'Email i lozinka su obavezni.');
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      final userId = await ref.read(authRepositoryProvider).signIn(
-            email: email,
-            password: password,
-          );
+      final userId = await ref
+          .read(authRepositoryProvider)
+          .signIn(email: email, password: password);
       if (userId != null) {
-        await ref.read(profileRepositoryProvider).createProfileIfNotExists(
-              userId,
-              email: email,
-            );
+        await ref
+            .read(profileRepositoryProvider)
+            .createProfileIfNotExists(userId, email: email);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_authErrorMessage(e))),
+        AppSnackBars.showError(
+          context,
+          e,
+          fallback:
+              'Prijava nije uspjela. Provjerite podatke i pokusajte ponovno.',
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  String _authErrorMessage(Object e) {
-    final msg = e.toString().toLowerCase();
-    if (msg.contains('invalid login credentials')) {
-      return 'Netočan email ili lozinka.';
-    }
-    if (msg.contains('email not confirmed')) {
-      return 'Potvrdite email adresu putem linka koji smo vam poslali.';
-    }
-    return 'Prijava neuspješna: $e';
   }
 
   @override
@@ -167,4 +156,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 }
-

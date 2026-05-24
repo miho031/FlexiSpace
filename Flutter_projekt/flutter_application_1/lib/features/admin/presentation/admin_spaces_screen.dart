@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/models/room.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../spaces/application/spaces_providers.dart';
 import '../application/admin_providers.dart';
 
@@ -45,7 +46,8 @@ class AdminSpacesScreen extends ConsumerWidget {
                         itemBuilder: (context, index) {
                           return _SpaceCard(
                             room: spaces[index],
-                            onEdit: () => _showEditSpace(context, spaces[index]),
+                            onEdit: () =>
+                                _showEditSpace(context, spaces[index]),
                             onToggleActive: () =>
                                 _toggleSpaceActive(ref, context, spaces[index]),
                           );
@@ -81,26 +83,28 @@ class AdminSpacesScreen extends ConsumerWidget {
     context.push('/admin/spaces/${room.id}/edit', extra: room);
   }
 
-  Future<void> _toggleSpaceActive(WidgetRef ref, BuildContext context, Room room) async {
+  Future<void> _toggleSpaceActive(
+    WidgetRef ref,
+    BuildContext context,
+    Room room,
+  ) async {
     try {
-      await ref.read(adminRepositoryProvider).updateSpace(
-            room.id,
-            isActive: !room.isActive,
-          );
+      await ref
+          .read(adminRepositoryProvider)
+          .updateSpace(room.id, isActive: !room.isActive);
       ref.invalidate(adminSpacesProvider);
       ref.invalidate(roomsProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(room.isActive ? 'Prostorija deaktivirana' : 'Prostorija aktivirana'),
-          ),
+        AppSnackBars.showSuccess(
+          context,
+          room.isActive ? 'Prostorija deaktivirana.' : 'Prostorija aktivirana.',
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Greška: $e')));
       }
     }
   }
@@ -148,10 +152,7 @@ class _SpaceCard extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: onEdit,
-              ),
+              IconButton(icon: const Icon(Icons.edit), onPressed: onEdit),
             ],
           ),
           const SizedBox(height: 8),
@@ -160,15 +161,19 @@ class _SpaceCard extends StatelessWidget {
             'Cijena: ${room.pricePerHour.toStringAsFixed(2).replaceAll('.', ',')} €/h',
             style: const TextStyle(fontSize: 14),
           ),
-          Text('Kapacitet: ${room.capacity}', style: const TextStyle(fontSize: 14)),
+          Text(
+            'Kapacitet: ${room.capacity}',
+            style: const TextStyle(fontSize: 14),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
               if (room.hasWifi) const Icon(Icons.wifi, size: 18),
-              if (room.hasWater) const Padding(
-                padding: EdgeInsets.only(left: 8),
-                child: Icon(Icons.videocam, size: 18),
-              ),
+              if (room.hasWater)
+                const Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Icon(Icons.videocam, size: 18),
+                ),
               const Spacer(),
               TextButton(
                 onPressed: onToggleActive,

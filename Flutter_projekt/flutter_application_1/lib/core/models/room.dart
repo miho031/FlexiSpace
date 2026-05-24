@@ -9,6 +9,7 @@ class Room {
   final bool hasWifi;
   final bool hasWater;
   final bool isActive;
+  final String wifiPassword;
 
   Room({
     required this.id,
@@ -20,6 +21,7 @@ class Room {
     this.hasWifi = false,
     this.hasWater = false,
     this.isActive = true,
+    this.wifiPassword = '',
   });
 
   double get pricePerHour => pricePerMinute * 60;
