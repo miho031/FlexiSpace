@@ -29,6 +29,6 @@ Sustav omogućuje lako rezerviranje i upravljanje suradnim prostorima, savršen 
 
 ## Link za preuzimanje:
 
-[FlexiSpace]([https://linktodocumentation](https://www.swisstransfer.com/d/a1d8aa1a-54b7-4824-8901-ce7493a64381))
+[FlexiSpace](https://www.swisstransfer.com/d/a1d8aa1a-54b7-4824-8901-ce7493a64381)
 
 
