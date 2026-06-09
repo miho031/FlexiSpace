@@ -24,7 +24,7 @@ Sustav omogućuje lako rezerviranje i upravljanje suradnim prostorima, savršen 
 
 ## Dokumentacija:
 
-[Dokumentacija](https://linktodocumentation)
+[Dokumentacija](https://www.swisstransfer.com/d/a06e4269-9203-4a7a-a790-5dee088f3c04)
 
 
 ## Link za preuzimanje:
